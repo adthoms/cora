@@ -11,6 +11,10 @@
 
 using PoseChain = std::vector<CORA::Symbol>;
 using PoseChains = std::vector<PoseChain>;
+
+using LandmarkChain = PoseChain;
+using LandmarkChains = PoseChains;
+
 using RPM = CORA::RelativePoseMeasurement;
 
 #ifdef GPERFTOOLS
@@ -33,6 +37,8 @@ PoseChains getRobotPoseChains(const CORA::Problem &problem) {
   // for each unique pose character, get the pose symbols (sorted)
   PoseChains robot_pose_chains;
   for (auto const &pose_char : unique_pose_chars) {
+    // DEBUG
+    // std::cout << "pose_char: " << pose_char << std::endl;
     PoseChain robot_pose_chain = problem.getPoseSymbols(pose_char);
     std::sort(robot_pose_chain.begin(), robot_pose_chain.end());
     robot_pose_chains.push_back(robot_pose_chain);
@@ -40,6 +46,34 @@ PoseChains getRobotPoseChains(const CORA::Problem &problem) {
 
   // return the robot pose chains
   return robot_pose_chains;
+}
+
+LandmarkChains getRobotLandmarkChains(const CORA::Problem &problem) {
+  // get all of the unique landmark characters
+  std::set<unsigned char> seen_landmark_chars;
+  for (auto const &all_landmark_symbols : problem.getLandmarkSymbolMap()) {
+    CORA::Symbol landmark_symbol = all_landmark_symbols.first;
+    seen_landmark_chars.insert(landmark_symbol.chr());
+  }
+
+  // get a sorted list of the unique landmark characters
+  std::vector<unsigned char> unique_landmark_chars = {
+      seen_landmark_chars.begin(), seen_landmark_chars.end()};
+  std::sort(unique_landmark_chars.begin(), unique_landmark_chars.end());
+
+  // for each unique landmark character, get the landmark symbols (sorted)
+  LandmarkChains robot_landmark_chains;
+  for (auto const &landmark_char : unique_landmark_chars) {
+    // DEBUG
+    // std::cout << "landmark_char: " << landmark_char << std::endl;
+    LandmarkChain robot_landmark_chain =
+        problem.getLandmarkSymbols(landmark_char);
+    std::sort(robot_landmark_chain.begin(), robot_landmark_chain.end());
+    robot_landmark_chains.push_back(robot_landmark_chain);
+  }
+
+  // return the robot landmark chains
+  return robot_landmark_chains;
 }
 
 CORA::Matrix getRandomStartPose(const int dim) {
@@ -471,7 +505,8 @@ void saveSolutions(const CORA::Problem &problem,
   size_t pyfg_index = pyfg_fpath.find(".pyfg");
   std::string save_dir_name =
       pyfg_fpath.substr(data_length, pyfg_index - data_length);
-  std::string save_dir_path = "/tmp/" + save_dir_name;
+  std::string save_dir_path =
+      "/home/alex/catkin_ws/src/post_eq_inspection_exp/cora/" + save_dir_name;
 
   // create the directory if it does not exist. Make sure to recursively create
   // the parent directories
@@ -484,6 +519,9 @@ void saveSolutions(const CORA::Problem &problem,
   // get the different robot pose chains
   PoseChains robot_pose_chains = getRobotPoseChains(problem);
 
+  // get the different robot landmark chains
+  LandmarkChains robot_landmark_chains = getRobotLandmarkChains(problem);
+
   // if tiers.pyfg, then we have four robots
   if (pyfg_fpath == "data/tiers.pyfg" && robot_pose_chains.size() != 4) {
     throw std::runtime_error("Expected 4 robots in tiers.pyfg");
@@ -495,10 +533,35 @@ void saveSolutions(const CORA::Problem &problem,
     // get the robot pose chain
     PoseChain robot_pose_chain = robot_pose_chains[robot_index];
 
+    // DEBUG
+    // for (const auto& symbol : robot_pose_chain) {
+    //   std::cout << "robot_pose_chain symbol: " << symbol.chr() <<
+    //   symbol.index() << std::endl;
+    // }
+
     // save the estimated poses for this robot
     std::string robot_save_path =
         save_path + std::to_string(robot_index) + ".tum";
     saveSolnToTum(robot_pose_chain, problem, aligned_soln, robot_save_path);
+    std::cout << "Saved " << robot_save_path << std::endl;
+  }
+
+  // enumerate over the robot landmark chains
+  for (size_t robot_index = 0; robot_index < robot_landmark_chains.size();
+       robot_index++) {
+    // get the robot landmark chain
+    LandmarkChain robot_landmark_chain = robot_landmark_chains[robot_index];
+
+    // DEBUG
+    // for (const auto& symbol : robot_landmark_chain) {
+    //   std::cout << "robot_landmark_chain symbol: " << symbol.chr() <<
+    //   symbol.index() << std::endl;
+    // }
+
+    // save the estimated landmarks for this robot
+    std::string robot_save_path =
+        save_path + std::to_string(robot_index) + ".txt";
+    saveSolnToTxt(robot_landmark_chain, problem, aligned_soln, robot_save_path);
     std::cout << "Saved " << robot_save_path << std::endl;
   }
 }
@@ -506,8 +569,8 @@ void saveSolutions(const CORA::Problem &problem,
 CORA::Matrix solveProblem(std::string pyfg_fpath) {
   std::cout << "Solving " << pyfg_fpath << std::endl;
 
-  CORA::Problem problem = CORA::parsePyfgTextToProblem("./bin/" + pyfg_fpath);
-
+  CORA::Problem problem = CORA::parsePyfgTextToProblem(
+      "/home/alex/catkin_ws/src/post_eq_inspection_exp/results/" + pyfg_fpath);
   // set the rank
   problem.setRank(problem.dim() + 1);
 
@@ -524,7 +587,7 @@ CORA::Matrix solveProblem(std::string pyfg_fpath) {
 
   CORA::Matrix x0 = problem.getRandomInitialGuess();
   // CORA::Matrix x0 = getOdomInitialization(problem, pyfg_fpath);
-  int max_rank = 10;
+  int max_rank = 100;
 
 #ifdef GPERFTOOLS
   ProfilerStart("cora.prof");
@@ -587,31 +650,18 @@ std::vector<std::string> getRangeAndRpmMrclamFiles() {
 }
 
 int main(int argc, char **argv) {
-  std::vector<std::string> original_exp_files = {
-      // "data/marine_two_robots.pyfg",
-      // "data/plaza1.pyfg", "data/plaza2.pyfg",
-      // "data/single_drone.pyfg",
-      // "data/tiers.pyfg"
-  }; // TIERS faster w/ random init
+  std::vector<std::string> files;
 
-  auto mrclam_range_only_files = getRangeOnlyMrclamFiles();
-  auto mrclam_range_and_rpm_files = getRangeAndRpmMrclamFiles();
-
-  std::vector<std::string> files = {};
-
-  // original experiments
-  // files.insert(files.end(), original_exp_files.begin(),
-  //              original_exp_files.end());
-
-  // mrclam range only experiments
-  // files.insert(files.end(), mrclam_range_only_files.begin(),
-  //              mrclam_range_only_files.end());
-
-  // mrclam range and rpm experiments
-  files.insert(files.end(), mrclam_range_and_rpm_files.begin(),
-               mrclam_range_and_rpm_files.end());
-
-  files = {"data/test.pyfg"};
+  // Check if command line arguments are provided
+  if (argc > 1) {
+    // Add command line arguments to the files vector
+    for (int i = 1; i < argc; i++) {
+      files.push_back(argv[i]);
+    }
+  } else {
+    // Default files if no command line arguments are provided
+    files = {"data/factor_graph.pyfg"};
+  }
 
   for (auto file : files) {
     CORA::Matrix soln = solveProblem(file);

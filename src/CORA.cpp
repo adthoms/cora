@@ -81,14 +81,14 @@ CoraResult solveCORA(Problem &problem, // NOLINT(runtime/references)
   // default TNT parameters for CORA
   Optimization::Riemannian::TNTParams<Scalar> params;
   params.max_TPCG_iterations = 250;
-  params.max_iterations = 300;
-  params.preconditioned_gradient_tolerance = 1e-3;
+  params.max_iterations = 5000;
+  params.preconditioned_gradient_tolerance = 1e-5;
   params.gradient_tolerance = 1e-3;
   params.theta = 0.8;
   params.Delta_tolerance = 1e-3;
   params.verbose = false;
   params.precision = 2;
-  params.max_computation_time = 50;
+  params.max_computation_time = 100;
   params.relative_decrease_tolerance = 1e-4;
   params.stepsize_tolerance = 1e-4;
   params.log_iterates = log_iterates;
@@ -97,7 +97,7 @@ CoraResult solveCORA(Problem &problem, // NOLINT(runtime/references)
   const Scalar MIN_CERT_ETA = 1e-6;
   const Scalar MAX_CERT_ETA = 1e-1;
   const Scalar REL_CERT_ETA = 1e-6;
-  const int LOBPCG_BLOCK_SIZE = 10;
+  const int LOBPCG_BLOCK_SIZE = 100;
   Scalar eta;
 
   // metric over the tangent space is the standard matrix trace inner product

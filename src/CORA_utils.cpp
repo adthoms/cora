@@ -287,4 +287,53 @@ void saveSolnToTum(const std::vector<Symbol> pose_symbols,
   // std::cout << "Saved robot poses to " << fpath << std::endl;
 }
 
+void saveSolnToTxt(const std::vector<Symbol> landmark_symbols,
+                   const Problem &problem, const Matrix &soln,
+                   const std::string &fpath) {
+  // we do not currently support Implicit formulation
+  if (problem.getFormulation() == Formulation::Implicit) {
+    throw std::runtime_error(
+        "saveSolnToTum does not currently support Implicit formulation");
+  }
+
+  checkMatrixShape("saveSolnToTum", problem.getDataMatrixSize(), problem.dim(),
+                   soln.rows(), soln.cols());
+
+  // open fpath for writing
+  std::ofstream output_file(fpath);
+  if (!output_file.is_open()) {
+    throw std::runtime_error("Could not open file " + fpath);
+  }
+
+  // print warning that we are not using timestamps
+  // std::cout << "Warning: timestamps are not being used in saveSolnToTum"
+  //           << std::endl;
+
+  // iterate over all the symbols and find the rotation and translation indices
+  for (size_t time = 0; time < landmark_symbols.size(); time++) {
+    //  write the poses to the file in the format:
+    //  L0 x y z
+    Matrix tran = getTranslation(landmark_symbols[time], problem, soln);
+
+    // get xyz from tran
+    Scalar x = tran(0);
+    Scalar y = tran(1);
+    Scalar z;
+    if (problem.dim() == 2) {
+      z = 0;
+    } else {
+      z = tran(2);
+    }
+
+    // write the line to the file
+    output_file << landmark_symbols[time].chr() << landmark_symbols[time].index() << " " << x << " " << y << " " << z << std::endl;
+  }
+
+  // close the file
+  output_file.close();
+
+  // print that we saved the poses
+  // std::cout << "Saved robot poses to " << fpath << std::endl;
+}
+
 } // namespace CORA

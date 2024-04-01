@@ -739,10 +739,24 @@ std::vector<Symbol> Problem::getPoseSymbols(unsigned char chr) const {
   std::vector<Symbol> pose_symbols;
   for (const auto &[pose_sym, pose_idx] : pose_symbol_idxs_) {
     if (pose_sym.chr() == chr) {
+      // DEBUG
+      // std::cout << "pose_sym: " << pose_sym.string() << std::endl;
       pose_symbols.push_back(pose_sym);
     }
   }
   return pose_symbols;
+}
+
+std::vector<Symbol> Problem::getLandmarkSymbols(unsigned char chr) const {
+  std::vector<Symbol> landmark_symbols;
+  for (const auto &[landmark_sym, landmark_idx] : landmark_symbol_idxs_) {
+    if (landmark_sym.chr() == chr) {
+      // DEBUG
+      // std::cout << "landmark_sym: " << landmark_sym.string() << std::endl;
+      landmark_symbols.push_back(landmark_sym);
+    }
+  }
+  return landmark_symbols;
 }
 
 Index Problem::getRotationIdx(const Symbol &pose_symbol) const {

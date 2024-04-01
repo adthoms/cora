@@ -70,4 +70,9 @@ void saveSolnToTum(const std::vector<Symbol> pose_symbols,
                    const Problem &problem, const Matrix &soln,
                    const std::string &fpath);
 
+
+void saveSolnToTxt(const std::vector<Symbol> landmark_symbols,
+                  const Problem &problem, const Matrix &soln,
+                  const std::string &fpath);
+
 } // namespace CORA

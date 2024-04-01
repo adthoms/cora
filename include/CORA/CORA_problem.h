@@ -235,6 +235,9 @@ public:
   // get pose symbols that start with a given character
   std::vector<Symbol> getPoseSymbols(unsigned char chr) const;
 
+  // get landmark symbols that start with a given character
+  std::vector<Symbol> getLandmarkSymbols(unsigned char chr) const;
+
   // Get copies of pose and landmark symbol maps
   std::map<Symbol, int> getPoseSymbolMap() const { return pose_symbol_idxs_; }
   std::map<Symbol, int> getLandmarkSymbolMap() const {

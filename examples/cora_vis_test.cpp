@@ -8,7 +8,7 @@
 
 int main() {
   CORA::Problem problem =
-      CORA::parsePyfgTextToProblem("./bin/data/factor_graph_small.pyfg");
+      CORA::parsePyfgTextToProblem("./bin/data/plaza2.pyfg");
   // "./bin/data/plaza2.pyfg");
   problem.updateProblemData();
 
