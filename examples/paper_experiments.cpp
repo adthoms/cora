@@ -11,6 +11,10 @@
 
 using PoseChain = std::vector<CORA::Symbol>;
 using PoseChains = std::vector<PoseChain>;
+
+using LandmarkChain = PoseChain;
+using LandmarkChains = PoseChains;
+
 using RPM = CORA::RelativePoseMeasurement;
 
 #ifdef GPERFTOOLS
@@ -40,6 +44,34 @@ PoseChains getRobotPoseChains(const CORA::Problem &problem) {
 
   // return the robot pose chains
   return robot_pose_chains;
+}
+
+LandmarkChains getRobotLandmarkChains(const CORA::Problem &problem) {
+  // get all of the unique landmark characters
+  std::set<unsigned char> seen_landmark_chars;
+  for (auto const &all_landmark_symbols : problem.getLandmarkSymbolMap()) {
+    CORA::Symbol landmark_symbol = all_landmark_symbols.first;
+    seen_landmark_chars.insert(landmark_symbol.chr());
+  }
+
+  // get a sorted list of the unique landmark characters
+  std::vector<unsigned char> unique_landmark_chars = {
+      seen_landmark_chars.begin(), seen_landmark_chars.end()};
+  std::sort(unique_landmark_chars.begin(), unique_landmark_chars.end());
+
+  // for each unique landmark character, get the landmark symbols (sorted)
+  LandmarkChains robot_landmark_chains;
+  for (auto const &landmark_char : unique_landmark_chars) {
+    // DEBUG
+    // std::cout << "landmark_char: " << landmark_char << std::endl;
+    LandmarkChain robot_landmark_chain =
+        problem.getLandmarkSymbols(landmark_char);
+    std::sort(robot_landmark_chain.begin(), robot_landmark_chain.end());
+    robot_landmark_chains.push_back(robot_landmark_chain);
+  }
+
+  // return the robot landmark chains
+  return robot_landmark_chains;
 }
 
 CORA::Matrix getRandomStartPose(const int dim) {
@@ -484,6 +516,9 @@ void saveSolutions(const CORA::Problem &problem,
   // get the different robot pose chains
   PoseChains robot_pose_chains = getRobotPoseChains(problem);
 
+  // get the different robot landmark chains
+  LandmarkChains robot_landmark_chains = getRobotLandmarkChains(problem);
+
   // if tiers.pyfg, then we have four robots
   if (pyfg_fpath == "data/tiers.pyfg" && robot_pose_chains.size() != 4) {
     throw std::runtime_error("Expected 4 robots in tiers.pyfg");
@@ -499,6 +534,25 @@ void saveSolutions(const CORA::Problem &problem,
     std::string robot_save_path =
         save_path + std::to_string(robot_index) + ".tum";
     saveSolnToTum(robot_pose_chain, problem, aligned_soln, robot_save_path);
+    std::cout << "Saved " << robot_save_path << std::endl;
+  }
+
+  // enumerate over the robot landmark chains
+  for (size_t robot_index = 0; robot_index < robot_landmark_chains.size();
+       robot_index++) {
+    // get the robot landmark chain
+    LandmarkChain robot_landmark_chain = robot_landmark_chains[robot_index];
+
+    // DEBUG
+    // for (const auto& symbol : robot_landmark_chain) {
+    //   std::cout << "robot_landmark_chain symbol: " << symbol.chr() <<
+    //   symbol.index() << std::endl;
+    // }
+
+    // save the estimated landmarks for this robot
+    std::string robot_save_path =
+        save_path + std::to_string(robot_index) + ".txt";
+    saveSolnToTxt(robot_landmark_chain, problem, aligned_soln, robot_save_path);
     std::cout << "Saved " << robot_save_path << std::endl;
   }
 }
