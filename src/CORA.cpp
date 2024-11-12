@@ -109,6 +109,11 @@ CoraResult solveCORA(Problem &problem, // NOLINT(runtime/references)
   // no custom instrumentation function for now
   std::optional<InstrumentationFunction> user_function = std::nullopt;
 
+  // std::string logDirectory =
+  //     "/home/alex/data/dcora_dpgo_examples/cora_examples/";
+  // std::string filenameX0 = logDirectory + "X0.csv";
+  // writeMatrixToFile(x0, filenameX0);
+
   CoraTntResult result;
   Matrix X = x0;
   CertResults cert_results;
@@ -130,6 +135,14 @@ CoraResult solveCORA(Problem &problem, // NOLINT(runtime/references)
         iterates.push_back(iterate);
       }
     }
+
+    // std::string filenameX = logDirectory + "X_" +
+    //                         std::to_string(problem.getRelaxationRank()) +
+    //                         ".csv";
+    // writeMatrixToFile(X, filenameX);
+
+    // std::cout << "X dims: " << result.x.rows() << " " << result.x.cols()
+    //           << std::endl;
 
     // check if the solution is certified
     eta = thresholdVal(result.f * REL_CERT_ETA, MIN_CERT_ETA, MAX_CERT_ETA);
@@ -173,7 +186,22 @@ CoraResult solveCORA(Problem &problem, // NOLINT(runtime/references)
     printIfVerbose(verbose, "\nProjecting solution to rank " +
                                 std::to_string(problem.dim()) +
                                 " and refining.");
+
+    /* TESTING */
+    // std::string logDirectory =
+    //     "/home/alex/data/dcora_dpgo_examples/cora_examples/";
+
+    // std::string filenameX = logDirectory + "X_max_rank.csv";
+    // writeMatrixToFile(X, filenameX);
+    /* TESTING */
+
     X = projectSolution(problem, X, verbose);
+
+    /* TESTING */
+    // std::string filenameXproject = logDirectory + "X_max_rank_projected.csv";
+    // writeMatrixToFile(X, filenameXproject);
+    /* TESTING */
+
     problem.setRank(problem.dim());
     result = Optimization::Riemannian::TNT<Matrix, Matrix, Scalar, Matrix>(
         f, QM, metric, retract, X, NablaF_Y, precon, params, user_function);

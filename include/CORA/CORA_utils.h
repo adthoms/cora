@@ -10,6 +10,13 @@
 namespace CORA {
 
 /**
+ * @brief Write a dense Eigen matrix to file
+ * @param M
+ * @param filename
+ */
+void writeMatrixToFile(const Matrix &M, const std::string &filename);
+
+/**
  * @brief This function implements the fast solution verification method
  * (Algorithm 3) described in the paper "Accelerating Certifiable Estimation
  * with Preconditioned Eigensolvers".
@@ -69,5 +76,9 @@ Matrix projectToSOd(const Matrix &A);
 void saveSolnToTum(const std::vector<Symbol> pose_symbols,
                    const Problem &problem, const Matrix &soln,
                    const std::string &fpath);
+
+void saveSolnToTxt(const std::vector<Symbol> landmark_symbols,
+                  const Problem &problem, const Matrix &soln,
+                  const std::string &fpath);
 
 } // namespace CORA

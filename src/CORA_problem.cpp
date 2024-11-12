@@ -12,6 +12,8 @@
 #include <CORA/CORA_problem.h>
 #include <CORA/CORA_utils.h>
 #include <Optimization/LinearAlgebra/LOBPCG.h>
+#include <iomanip>
+#include <fstream>
 
 namespace CORA {
 void Problem::addPoseVariable(const Symbol &pose_id) {
@@ -451,6 +453,9 @@ void Problem::updatePreconditioner() {
 
     // Compute the required value of the regularization parameter lambda_reg
     Scalar lambda_reg = Dnorm / (reg_Chol_precon_max_cond_ - 1);
+    std::cout << "Regularized Cholesky preconditioner:" << std::endl;
+    std::cout << "Dnorm = " << Dnorm << std::endl;
+    std::cout << "lambda_reg = " << lambda_reg << std::endl;
 
     SparseMatrix epsilonPosDefUpdate =
         SparseMatrix(data_matrix_.rows(), data_matrix_.cols());
@@ -567,6 +572,11 @@ void Problem::fillDataMatrix() {
   // construct the data matrix
   data_matrix_.setFromTriplets(combined_triplets.begin(),
                                combined_triplets.end());
+
+  // TMP
+  // Matrix Q_dense = data_matrix_.toDense();
+  // std::cout << "Q_local_dense: " << std::endl;
+  // std::cout << std::fixed << std::setprecision(9) << Q_dense << std::endl;
 }
 
 Matrix Problem::dataMatrixProduct(const Matrix &Y) const {
@@ -846,6 +856,29 @@ CertResults Problem::certify_solution(const Matrix &Y, Scalar eta, size_t nx,
   Lambda_blocks = compute_Lambda_blocks(Y);
   S = data_matrix_ - compute_Lambda_from_Lambda_blocks(Lambda_blocks);
 
+  /* TESTING */
+  // std::string logDirectory =
+  //     "/home/alex/data/dcora_dpgo_examples/cora_examples/";
+
+  // std::string filenameQ =
+  //     logDirectory + "Q_" + std::to_string(relaxation_rank_) + ".csv";
+  // writeMatrixToFile(data_matrix_.toDense(), filenameQ);
+
+  // std::string filenameOBLambdaBlocks = logDirectory +
+  // "oblique_Lambda_blocks_" +
+  //                                      std::to_string(relaxation_rank_) +
+  //                                      ".csv";
+  // writeMatrixToFile(Lambda_blocks.second, filenameOBLambdaBlocks);
+
+  // std::string filenameS =
+  //     logDirectory + "S_" + std::to_string(relaxation_rank_) + ".csv";
+  // writeMatrixToFile(S.toDense(), filenameS);
+
+  // std::string filenameY =
+  //     logDirectory + "Y_" + std::to_string(relaxation_rank_) + ".csv";
+  // writeMatrixToFile(Y.transpose(), filenameY);
+  /* TESTING */
+
   /// Test positive-semidefiniteness of certificate matrix S using fast
   /// verification method
   auto num_eigvecs =
@@ -914,6 +947,22 @@ Problem::LambdaBlocks Problem::compute_Lambda_blocks(const Matrix &Y) const {
            .array())
           .rowwise()
           .sum(); // (r x 1) vector of inner products
+
+  // Vector Y_PRINT =
+  //     Y.block(rot_mat_sz, 0, numRangeMeasurements(), Y.cols()).array();
+  // Vector QY_PRINT =
+  //     QY.block(rot_mat_sz, 0, numRangeMeasurements(), Y.cols()).array();
+  // Vector Y_PRINT_BY_QY_PRINT = Y_PRINT * QY_PRINT;
+
+  // std::cout << "rank : " << Y.cols() << std::endl;
+  // std::cout << std::fixed << std::setprecision(9) << "QY_PRINT:\n"
+  //           << QY_PRINT << std::endl;
+  // std::cout << std::fixed << std::setprecision(9) << "Y_PRINT:\n"
+  //           << Y_PRINT << std::endl;
+  // std::cout << std::fixed << std::setprecision(9) << "Y_PRINT_BY_QY_PRINT:\n"
+  //           << Y_PRINT_BY_QY_PRINT << std::endl;
+  // std::cout << std::fixed << std::setprecision(9) << "oblique_inner_prods:\n"
+  //           << oblique_inner_prods << std::endl;
 
   return std::make_pair(stiefel_Lambda_blocks, oblique_inner_prods);
 }

@@ -524,6 +524,11 @@ CORA::Matrix solveProblem(std::string pyfg_fpath, int init_rank_jump,
   CORA::Matrix x0;
   if (init_type == InitType::Random) {
     x0 = problem.getRandomInitialGuess();
+    // std::string filename =
+    //     "/home/alex/data/dcora_examples/multi_robot_example_pgo/"
+    //     "X_INIT_CORA.csv";
+    // CORA::writeMatrixToFile(x0, filename);
+
   } else if (init_type == InitType::Odom) {
     x0 = getOdomInitialization(problem, pyfg_fpath);
   }

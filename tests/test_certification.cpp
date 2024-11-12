@@ -107,6 +107,12 @@ TEST_CASE("Test small RA-SLAM verification") {
 
   // verify that the solution is certified (within)
   SparseMatrix S_gt = problem.get_certificate_matrix(X_gt);
+  /* TESTING */
+  // std::cout << "S =\n"
+  //           << std::fixed << std::setprecision(9) << S_gt.toDense()
+  //           << std::endl;
+  /* TESTING */
+
   Scalar numerical_tolerance = 1e-6;
   CertResults res_gt = fast_verification(S_gt, numerical_tolerance, 1);
   checkResultsCertified(res_gt);
